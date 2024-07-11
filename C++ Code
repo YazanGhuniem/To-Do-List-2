@@ -1,0 +1,131 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+
+class Task {
+public:
+    std::string description;
+    bool completed;
+
+    Task(const std::string& desc) : description(desc), completed(false) {}
+
+    void toggleCompleted() {
+        completed = !completed;
+    }
+
+    std::string toString() const {
+        return (completed ? "[x] " : "[ ] ") + description;
+    }
+};
+
+class ToDoList {
+private:
+    std::vector<Task> tasks;
+    const std::string filename = "tasks.txt";
+
+    void loadTasks() {
+        std::ifstream file(filename);
+        if (file.is_open()) {
+            std::string line;
+            while (std::getline(file, line)) {
+                if (!line.empty()) {
+                    bool completed = line[1] == 'x';
+                    std::string description = line.substr(4);
+                    Task task(description);
+                    task.completed = completed;
+                    tasks.push_back(task);
+                }
+            }
+            file.close();
+        }
+    }
+
+    void saveTasks() {
+        std::ofstream file(filename);
+        if (file.is_open()) {
+            for (const auto& task : tasks) {
+                file << task.toString() << std::endl;
+            }
+            file.close();
+        }
+    }
+
+public:
+    ToDoList() {
+        loadTasks();
+    }
+
+    ~ToDoList() {
+        saveTasks();
+    }
+
+    void addTask(const std::string& description) {
+        tasks.emplace_back(description);
+    }
+
+    void removeTask(int index) {
+        if (index >= 0 && index < tasks.size()) {
+            tasks.erase(tasks.begin() + index);
+        } else {
+            std::cerr << "Invalid task index.\n";
+        }
+    }
+
+    void toggleTaskCompletion(int index) {
+        if (index >= 0 && index < tasks.size()) {
+            tasks[index].toggleCompleted();
+        } else {
+            std::cerr << "Invalid task index.\n";
+        }
+    }
+
+    void listTasks() const {
+        for (int i = 0; i < tasks.size(); ++i) {
+            std::cout << i + 1 << ". " << tasks[i].toString() << std::endl;
+        }
+    }
+};
+
+void printMenu() {
+    std::cout << "1. Add task\n";
+    std::cout << "2. Remove task\n";
+    std::cout << "3. Toggle task completion\n";
+    std::cout << "4. List tasks\n";
+    std::cout << "5. Exit\n";
+}
+
+int main() {
+    ToDoList toDoList;
+    int choice = 0;
+
+    while (choice != 5) {
+        printMenu();
+        std::cout << "Enter your choice: ";
+        std::cin >> choice;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Clear the input buffer
+
+        if (choice == 1) {
+            std::string description;
+            std::cout << "Enter task description: ";
+            std::getline(std::cin, description);
+            toDoList.addTask(description);
+        } else if (choice == 2) {
+            int index;
+            std::cout << "Enter task index to remove: ";
+            std::cin >> index;
+            toDoList.removeTask(index - 1);
+        } else if (choice == 3) {
+            int index;
+            std::cout << "Enter task index to toggle completion: ";
+            std::cin >> index;
+            toDoList.toggleTaskCompletion(index - 1);
+        } else if (choice == 4) {
+            toDoList.listTasks();
+        } else if (choice != 5) {
+            std::cerr << "Invalid choice. Please try again.\n";
+        }
+    }
+
+    return 0;
+}
